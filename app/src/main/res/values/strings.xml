@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">minote</string>
+    <string name="loading_msg">Loading your %s</string>
+    <string name="notes_list_success_message">Here are your notes</string>
+    <string name="note_list_success_message">Here is your note</string>
+    <string name="note_list_error_message">Something went wrong while fetching your note%s</string>
+    <string name="note_create">Create a new note</string>
+    <string name="note_new_title_label">What\'s this about?</string>
+    <string name="tags_list_success_message">Your Tags</string>
+</resources>
