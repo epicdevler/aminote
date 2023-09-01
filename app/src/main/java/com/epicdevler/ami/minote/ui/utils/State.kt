@@ -1,7 +1,6 @@
 package com.epicdevler.ami.minote.ui.utils
 
 import android.content.Context
-import android.util.Log
 import androidx.annotation.StringRes
 
 sealed interface State<T> {
@@ -15,7 +14,7 @@ sealed interface State<T> {
         val message: UiText = UiText.None
     ) : State<T> {
         enum class Reason {
-            EmptyData, UnClassified
+            EmptyData, CouldNotSaveNote, UnClassified, EmptyField
         }
     }
 
@@ -45,7 +44,14 @@ sealed class UiText(
             }
 
             is ResString -> {
-                context?.getString(resId!!, *formatArgs) ?: message ?: ""
+                val transformedArgs = formatArgs.map {
+                    try {
+                        context?.getString(it as Int)
+                    } catch (_: Exception) {
+                        it
+                    }
+                }.toTypedArray()
+                context?.getString(resId!!, *transformedArgs) ?: message ?: ""
             }
 
             is None -> ""

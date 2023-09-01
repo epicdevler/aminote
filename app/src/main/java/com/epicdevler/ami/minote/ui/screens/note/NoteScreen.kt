@@ -1,12 +1,14 @@
 package com.epicdevler.ami.minote.ui.screens.note
 
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
@@ -29,26 +31,38 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.epicdevler.ami.minote.R
 import com.epicdevler.ami.minote.ui.screens.components.AppBar
+import com.epicdevler.ami.minote.ui.screens.components.ErrorState
+import com.epicdevler.ami.minote.ui.screens.components.Loader
+import com.epicdevler.ami.minote.ui.screens.components.TextField
+import com.epicdevler.ami.minote.ui.utils.State
+import com.epicdevler.ami.minote.ui.utils.UiText.None.value
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
+
+sealed interface NoteChangeRequest {
+    class Save(val title: String, val content: String) : NoteChangeRequest
+    class AddTag(val title: String, val content: String) : NoteChangeRequest
+}
 
 @Composable
 fun NoteScreen(
-    noteId: String?,
-    onNavigate: () -> Unit = {},
+    uiState: NoteVM.UiState,
+    onRequestChange: (NoteChangeRequest) -> Unit,
+    onNavigate: (String) -> Unit = {},
     onNavigateUp: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val titleFocusRequester = remember {
         FocusRequester.Default
@@ -62,30 +76,97 @@ fun NoteScreen(
     var contentTextField by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
     }
+    var tagTitle by rememberSaveable {
+        mutableStateOf("")
+    }
+    var notifyOfChanges by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(key1 = uiState) {
+        when (uiState.state) {
+            is State.Idle -> Unit
+            is State.Error -> Toast.makeText(
+                context,
+                uiState.state.message.value(context),
+                Toast.LENGTH_SHORT
+            ).show()
+
+            is State.Loading -> {}
+            is State.Success -> {
+                launch {
+                    if (titleTextField.text.isNotEmpty() && notifyOfChanges) Toast.makeText(
+                        context,
+                        "${titleTextField.text} Saved",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                if (!notifyOfChanges) {
+                    val note = uiState.note
+                    note?.let {
+                        tagTitle = it.tag.title
+                    }
+                    note?.title?.let { titleTextField = titleTextField.copy(text = it) }
+                    note?.content?.let { contentTextField = contentTextField.copy(text = it) }
+
+                }
+            }
+
+        }
+    }
+
+    LaunchedEffect(key1 = titleTextField.text, key2 = contentTextField.text) {
+        launch {
+            val noteDataChanged =
+                titleTextField.text != uiState.note?.title || contentTextField.text != uiState.note.content
+            if (noteDataChanged && titleTextField.text.isNotEmpty()) {
+                delay(1.seconds)
+                onRequestChange(
+                    NoteChangeRequest.Save(
+                        title = titleTextField.text,
+                        content = contentTextField.text
+                    )
+                )
+                if (!notifyOfChanges) {
+                    notifyOfChanges = true
+                }
+            }
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-
         AppBar(
+            title = {},
             onBackPressed = onNavigateUp,
+            actionsVisible = uiState.state is State.Success || uiState.state is State.Idle,
             actions = {
 
-                TextButton(
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = colorScheme.onBackground
-                    ),
-                    onClick = { /*TODO*/ }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                AnimatedVisibility(tagTitle.isNotEmpty()) {
+                    TextButton(
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorScheme.onBackground
+                        ),
+                        onClick = { onNavigate("selectTag/${uiState.note?.id ?: "0"}") }
                     ) {
-                        AnimatedVisibility(true) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = "Tag",
+                                text = tagTitle,
                                 style = typography.labelLarge
                             )
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_tag),
+                                contentDescription = "tag",
+                                modifier = Modifier.rotate(30f)
+                            )
                         }
+                    }
+                }
+                AnimatedVisibility(tagTitle.isEmpty()) {
+                    IconButton(onClick = { onNavigate("selectTag/${uiState.note?.id ?: "0"}") }) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_tag),
                             contentDescription = "tag",
@@ -93,7 +174,6 @@ fun NoteScreen(
                         )
                     }
                 }
-
                 IconButton(onClick = { /*TODO*/ }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_more),
@@ -103,84 +183,65 @@ fun NoteScreen(
             }
         )
 
-        TextField(
-            value = titleTextField,
-            placeHolder = stringResource(R.string.note_new_title_label),
-            onValueChange = {
-                titleTextField = it
-            },
-            singleLine = true,
-            style = typography.headlineLarge.copy(color = colorScheme.onBackground),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Words,
-                imeAction = ImeAction.Default
-            ),
-            keyboardActions = KeyboardActions { focusManager.moveFocus(FocusDirection.Down) },
-            modifier = Modifier
-                .focusRequester(focusRequester = titleFocusRequester)
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        )
+        AnimatedContent(targetState = uiState.state, label = "note_content") { state ->
+            when (state) {
+                is State.Error -> {
+                    ErrorState(message = state.message.value(context))
+                }
 
-        TextField(
-            value = contentTextField,
-            placeHolder = "more details here...",
-            onValueChange = {
-                contentTextField = it
-            },
-            style = typography.bodyMedium.copy(color = colorScheme.onBackground),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-            ),
-            modifier = Modifier
-                .focusRequester(focusRequester = contentFocusRequester)
-                .fillMaxWidth()
-                .weight(1f)
-                .padding(horizontal = 16.dp)
-        )
+                is State.Loading -> {
+                    Loader(modifier = Modifier.fillMaxSize())
+                }
 
-    }
-}
+                else -> Unit
+            }
+        }
 
-@Composable
-fun TextField(
-    modifier: Modifier = Modifier,
-    value: TextFieldValue,
-    onValueChange: (TextFieldValue) -> Unit,
-    style: TextStyle,
-    placeHolder: String,
-    readOnly: Boolean = false,
-    singleLine: Boolean = false,
-    enabled: Boolean = true,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions.Default,
-    cursorBrush: Brush = SolidColor(colorScheme.onBackground),
-) {
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier,
-        singleLine = singleLine,
-        readOnly = readOnly,
-        enabled = enabled,
-        textStyle = style,
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        cursorBrush = cursorBrush,
-        decorationBox = { innerTextField ->
-            innerTextField()
-            if (value.text.isEmpty()) {
-                Text(
-                    text = placeHolder,
-                    style = style.copy(color = style.color.copy(.8f))
+        AnimatedVisibility(visible = uiState.state is State.Success) {
+
+            Column(modifier = Modifier.fillMaxSize()) {
+                TextField(
+                    value = titleTextField,
+                    placeHolder = stringResource(R.string.note_new_title_label),
+                    onValueChange = {
+                        titleTextField = it
+                    },
+                    singleLine = true,
+                    style = typography.headlineLarge.copy(color = colorScheme.onBackground),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Words,
+                        imeAction = ImeAction.Default
+                    ),
+                    keyboardActions = KeyboardActions {
+                        focusManager.moveFocus(
+                            FocusDirection.Down
+                        )
+                    },
+                    modifier = Modifier
+                        .focusRequester(focusRequester = titleFocusRequester)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+
+                TextField(
+                    value = contentTextField,
+                    placeHolder = "more details here...",
+                    onValueChange = {
+                        contentTextField = it
+                    },
+                    style = typography.bodyMedium.copy(color = colorScheme.onBackground),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                    ),
+                    modifier = Modifier
+                        .focusRequester(focusRequester = contentFocusRequester)
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
                 )
             }
-        },
-    )
-}
+        }
 
-@Preview(name = "NoteScreen")
-@Composable
-private fun PreviewNoteScreen() {
-    NoteScreen(noteId = null)
+
+    }
 }

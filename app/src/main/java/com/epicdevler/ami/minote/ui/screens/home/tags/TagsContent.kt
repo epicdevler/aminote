@@ -5,21 +5,29 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.epicdevler.ami.minote.R
 import com.epicdevler.ami.minote.ui.screens.components.AppBar
+import com.epicdevler.ami.minote.ui.screens.components.EmptyListState
+import com.epicdevler.ami.minote.ui.screens.components.ErrorState
 import com.epicdevler.ami.minote.ui.screens.components.Loader
 import com.epicdevler.ami.minote.ui.utils.State
 import com.epicdevler.ami.minote.ui.utils.UiText.None.value
@@ -40,11 +48,34 @@ fun TagsContent(
                 .padding(16.dp)
                 .padding(top = 16.dp)
         ) {
-            Text(
-                text = uiState.message.value(context),
-                style = MaterialTheme.typography.headlineMedium,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
-            )
+            ) {
+                Text(
+                    text = uiState.message.value(context),
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 10.dp)
+                )
+
+                AnimatedVisibility(
+                    visible = uiState.state is State.Success || try {
+                        (uiState.state as State.Error).reason == State.Error.Reason.EmptyData
+                    } catch (_: Exception) {
+                        false
+                    }
+                ) {
+                    IconButton(onClick = { onNavigate("createTag") }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_add),
+                            contentDescription = "add"
+                        )
+                    }
+                }
+
+            }
             AnimatedVisibility(visible = uiState.state is State.Success) {
                 Text(
                     text = "Create custom tags to help categories your notes",
@@ -62,7 +93,15 @@ fun TagsContent(
                 }
 
                 is State.Error -> {
+                    when (state.reason) {
+                        State.Error.Reason.EmptyData -> {
+                            EmptyListState(message = "Create tags to categories your notes.")
+                        }
 
+                        else -> {
+                            ErrorState(message = state.message.value(context))
+                        }
+                    }
                 }
 
                 is State.Success -> {
@@ -75,12 +114,14 @@ fun TagsContent(
                     ) {
                         items(
                             key = { it.id },
-                            items = state.data
+                            items = uiState.tags
                         ) { tag ->
                             Tag(
                                 modifier = Modifier.fillMaxSize(),
                                 tag = tag,
-                                onClick = {}
+                                onClick = {
+                                    onNavigate("tag/?tagId=${tag.id}/notes")
+                                }
                             )
                         }
                     }

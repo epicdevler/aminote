@@ -43,7 +43,7 @@ fun Tag(
             color = colorScheme.onBackground,
             modifier = Modifier
                 .weight(1f)
-                .padding(vertical = 10.dp),
+                .padding(vertical = 10.dp).padding(end = 10.dp),
         )
         Column(
             modifier = Modifier.weight(.5f)
@@ -56,7 +56,7 @@ fun Tag(
             )
             Text(
                 text = if (tag.availableNotes < 1) "Note" else "Notes",
-                style = typography.titleMedium,
+                style = typography.bodyMedium,
                 color = colorScheme.onBackground.copy(.4f),
                 modifier = Modifier.fillMaxWidth(),
             )

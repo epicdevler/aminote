@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.epicdevler.ami.minote.ui.screens.home.BottomNavigation.navItems
 import com.epicdevler.ami.minote.ui.screens.home.notes.NotesContent
+import com.epicdevler.ami.minote.ui.screens.home.notes.NotesVM
 import com.epicdevler.ami.minote.ui.screens.home.tags.TagsContent
 import com.epicdevler.ami.minote.ui.theme.Shapes
 import com.epicdevler.ami.minote.ui.theme.Shapes.top
@@ -75,6 +76,8 @@ private object BottomNavigation {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
+    notesUiState: NotesVM.UiState,
+    onRequestLoadNote: (noteId: String?) -> Unit,
     onNavigate: (String) -> Unit
 ) {
     val pagerState = rememberPagerState {
@@ -97,6 +100,8 @@ fun HomeScreen(
             ) { contentIndex ->
                 when (contentIndex) {
                     0 -> NotesContent(
+                        noteUiState = notesUiState,
+                        onRequestLoadNote = onRequestLoadNote,
                         onNavigate = onNavigate
                     )
 

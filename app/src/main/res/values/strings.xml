@@ -7,4 +7,19 @@
     <string name="note_create">Create a new note</string>
     <string name="note_new_title_label">What\'s this about?</string>
     <string name="tags_list_success_message">Your Tags</string>
+    <string name="search_helper_info">Start typing to search</string>
+    <string name="user_greeting">Hello, %s</string>
+    <string name="user_greeting_morning">Good morning</string>
+    <string name="user_greeting_noon">Good afternoon</string>
+    <string name="user_greeting_eve">Good evening</string>
+    <string name="tag_note">Tag Note</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
+    <string name="create_tag_input_placeholder">Tag Name</string>
+    <string name="create_tag_helper_info">Tags helps you identity notes tied to a particular subject matter. Enter a descriptive name (max of 2 words) for your future notes, e.g Work, School, Ideas, ...</string>
+    <string name="create_tag">Create Tag</string>
+    <string name="tag_create">Create Tags</string>
+    <string name="create_tag_error_empty_field">No title provided.</string>
+    <string name="create_tag_error_invalid_length">Tag title should only contain 2 words</string>
+    <string name="empty_notes_action_info">Start taking digital versions of your note, meetings, ideas and more.</string>
 </resources>

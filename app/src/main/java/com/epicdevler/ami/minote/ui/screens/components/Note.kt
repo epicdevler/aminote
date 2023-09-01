@@ -52,7 +52,7 @@ fun Note(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = note.tag,
+                text = note.tag.title,
                 style = typography.labelSmall,
                 color = colorScheme.onBackground.copy(.80f),
                 textAlign = TextAlign.End,

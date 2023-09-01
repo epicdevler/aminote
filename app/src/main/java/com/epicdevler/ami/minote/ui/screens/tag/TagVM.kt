@@ -1,44 +1,40 @@
-package com.epicdevler.ami.minote.ui.screens.home.notes
+package com.epicdevler.ami.minote.ui.screens.tag
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.epicdevler.ami.minote.R
 import com.epicdevler.ami.minote.data.datasource.DummyNotesData
-import com.epicdevler.ami.minote.data.repositories.NotesRepo
+import com.epicdevler.ami.minote.data.repositories.TagsRepo
 import com.epicdevler.ami.minote.data.utils.Result
 import com.epicdevler.ami.minote.ui.utils.State
 import com.epicdevler.ami.minote.ui.utils.UiText
 import kotlinx.coroutines.launch
 
-class NotesVM : ViewModel() {
+class TagVM : ViewModel() {
 
-    companion object {
-        private const val TAG = "NOTES_VM"
-    }
-
-    private val notesRepo = NotesRepo
+    private val tagsRepo = TagsRepo
 
     var uiState by mutableStateOf(UiState(state = State.Idle()))
         private set
 
-    init {
-        uiState = uiState.copy(
-            greeting = UiText.ResString(R.string.user_greeting, R.string.user_greeting_noon)
-        )
 
+    fun loadTagNotes(
+        tagId: String
+    ) {
         viewModelScope.launch {
-            notesRepo.notes.collect { noteResult ->
+            uiState = uiState.copy(
+                state = State.Loading(),
+                message = UiText.ResString(R.string.loading_msg, "Notes")
+            )
+            launch { tagsRepo.getNotes(tagId = tagId) }
+            tagsRepo.tagNotes.collect { noteResult ->
                 when (noteResult) {
                     is Result.Idle -> Unit
 
                     is Result.Failed -> {
-
-                        Log.e(TAG, "loadNotes: M -> ${noteResult.message}")
                         uiState = uiState.copy(
                             state = State.Error(
                                 reason = State.Error.Reason.UnClassified,
@@ -48,13 +44,15 @@ class NotesVM : ViewModel() {
                     }
 
                     is Result.Success -> {
-                        val notes = noteResult.data!!
+                        val tagNote = noteResult.data!!
+                        val tagNotes = tagNote.notes
                         uiState = when {
-                            notes.isEmpty() -> {
+                            tagNotes.isEmpty() -> {
                                 uiState.copy(
                                     state = State.Error(
                                         reason = State.Error.Reason.EmptyData
                                     ),
+                                    tagNotes = tagNote,
                                     message = UiText.ResString(R.string.note_create)
                                 )
                             }
@@ -62,8 +60,8 @@ class NotesVM : ViewModel() {
                             else -> {
                                 uiState.copy(
                                     state = State.Success(null),
-                                    notes = notes,
-                                    message = UiText.ResString(if (notes.size > 1) R.string.notes_list_success_message else R.string.note_list_success_message)
+                                    tagNotes = tagNote,
+                                    message = UiText.ResString(if (tagNotes.size > 1) R.string.notes_list_success_message else R.string.note_list_success_message)
                                 )
                             }
                         }
@@ -71,32 +69,13 @@ class NotesVM : ViewModel() {
                 }
             }
         }
-
-        loadNotes()
-
-    }
-
-    private fun loadNotes() {
-        viewModelScope.launch {
-            Log.e(TAG, "loadNotes: Requested")
-            uiState = uiState.copy(
-                state = State.Loading(),
-                message = UiText.ResString(R.string.loading_msg, "Notes")
-            )
-            launch { notesRepo.get() }
-        }
     }
 
     data class UiState(
-        val greeting: UiText = UiText.None,
-        val state: State<Any?> = State.Idle(),
-        val notes: List<DummyNotesData.Note> = listOf(),
+        val state: State<Nothing?> = State.Idle(),
+        val tagNotes: DummyNotesData.TagNotes? = null,
         val message: UiText = UiText.None,
     )
 
-    override fun onCleared() {
-        super.onCleared()
-        Log.e(TAG, "onCleared: ")
-    }
 
 }
