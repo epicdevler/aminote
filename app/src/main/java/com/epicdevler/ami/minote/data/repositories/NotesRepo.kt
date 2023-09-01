@@ -27,7 +27,7 @@ object NotesRepo {
     val notes: StateFlow<Result<List<DummyNotesData.Note>>> = _notes.asStateFlow()
 
     suspend fun get(): Unit = withContext(Dispatchers.IO) {
-
+        Log.e(TAG, "get: Called")
         try {
             notesDS.notes().collect {
                 _notes.tryEmit(

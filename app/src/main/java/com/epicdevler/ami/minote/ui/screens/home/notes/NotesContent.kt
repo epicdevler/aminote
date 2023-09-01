@@ -54,8 +54,8 @@ fun NotesContent(
             AppBar(
                 actionsVisible = true,
                 actions = {
-                    AnimatedVisibility(visible = noteUiState.state is State.Success) {
-                        IconButton(onClick = { onNavigate("search/${SearchReason.FindNote}") }) {
+                    AnimatedVisibility(visible = noteUiState.state is State.Success && noteUiState.notes.size > 20) {
+                        IconButton(onClick = { onNavigate("search/?tagId=${null}/${SearchReason.FindNote}") }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_search),
                                 contentDescription = "search"

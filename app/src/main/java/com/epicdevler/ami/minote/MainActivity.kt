@@ -3,7 +3,6 @@ package com.epicdevler.ami.minote
 import android.animation.ObjectAnimator
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.animation.AnticipateInterpolator
 import androidx.activity.ComponentActivity
@@ -13,13 +12,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.DialogHost
 import androidx.navigation.compose.DialogNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -35,7 +32,6 @@ import com.epicdevler.ami.minote.ui.screens.note.NoteChangeRequest
 import com.epicdevler.ami.minote.ui.screens.note.NoteScreen
 import com.epicdevler.ami.minote.ui.screens.note.NoteVM
 import com.epicdevler.ami.minote.ui.screens.note.SelectTagDialog
-import com.epicdevler.ami.minote.ui.screens.note.SelectTagVM
 import com.epicdevler.ami.minote.ui.screens.search.SearchReason
 import com.epicdevler.ami.minote.ui.screens.search.SearchScreen
 import com.epicdevler.ami.minote.ui.screens.tag.TagNotesScreen
@@ -111,8 +107,8 @@ class MainActivity : ComponentActivity() {
                                     defaultValue = null
                                 }
                             )
-                        ) { backStack ->
-                            val noteId = backStack.arguments?.getString("noteId")
+                        ) {// backStack ->
+//                            val noteId = backStack.arguments?.getString("noteId")
                             NoteScreen(
                                 uiState = noteVM.uiState,
                                 onRequestChange = {
@@ -150,12 +146,25 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable(
-                            route = "search/{searchReason}",
+                            route = "search/?tagId={tagId}/{searchReason}",
+                            arguments = listOf(
+                                navArgument("tagId") {
+                                    nullable = true
+                                    defaultValue = null
+                                }
+                            ),
                         ) { backStack ->
                             val searchReason =
                                 SearchReason.valueOf(backStack.arguments?.getString("searchReason")!!)
+                            val tagId = backStack.arguments?.getString("tagId")
                             SearchScreen(
                                 reason = searchReason,
+                                forTag = tagId,
+                                onRequestLoadNote = { noteId ->
+                                    noteVM.onEvent(
+                                        event = NoteVM.Event.LoadNote(noteId)
+                                    )
+                                },
                                 onNavigate = {
                                     navController.navigate(it) {
                                         popUpTo(navController.currentDestination?.route!!) {

@@ -15,12 +15,12 @@ import com.epicdevler.ami.minote.R
 
 @Composable
 fun Loader(
-    modifier: Modifier
+    modifier: Modifier = Modifier.fillMaxSize()
 ) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loader))
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
     ) {
         LottieAnimation(
             modifier = Modifier.size(100.dp),

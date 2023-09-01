@@ -29,6 +29,7 @@ import com.epicdevler.ami.minote.ui.screens.components.AppBar
 import com.epicdevler.ami.minote.ui.screens.components.EmptyListState
 import com.epicdevler.ami.minote.ui.screens.components.ErrorState
 import com.epicdevler.ami.minote.ui.screens.components.Loader
+import com.epicdevler.ami.minote.ui.utils.BackPressHandler
 import com.epicdevler.ami.minote.ui.utils.State
 import com.epicdevler.ami.minote.ui.utils.UiText.None.value
 
@@ -40,6 +41,8 @@ fun TagsContent(
     val vm: TagsVM = viewModel()
     val uiState = vm.uiState
     val context = LocalContext.current
+
+    BackPressHandler(onBackPressed = onNavigateUp)
 
     Column {
         AppBar()
@@ -87,7 +90,6 @@ fun TagsContent(
 
         AnimatedContent(targetState = uiState.state, label = "note_content") { state ->
             when (state) {
-                is State.Idle -> Unit
                 is State.Loading -> {
                     Loader(modifier = Modifier)
                 }
@@ -104,27 +106,29 @@ fun TagsContent(
                     }
                 }
 
-                is State.Success -> {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
+                else -> Unit
+
+            }
+        }
+        AnimatedVisibility(visible = uiState.state is State.Success) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                items(
+                    key = { it.id },
+                    items = uiState.tags
+                ) { tag ->
+                    Tag(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        items(
-                            key = { it.id },
-                            items = uiState.tags
-                        ) { tag ->
-                            Tag(
-                                modifier = Modifier.fillMaxSize(),
-                                tag = tag,
-                                onClick = {
-                                    onNavigate("tag/?tagId=${tag.id}/notes")
-                                }
-                            )
+                        tag = tag,
+                        onClick = {
+                            onNavigate("tag/?tagId=${tag.id}/notes")
                         }
-                    }
+                    )
                 }
             }
         }

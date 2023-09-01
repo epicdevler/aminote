@@ -73,8 +73,8 @@ fun TagNotesScreen(
                 onBackPressed = onNavigateUp,
                 actionsVisible = true,
                 actions = {
-                    AnimatedVisibility(visible = uiState.state is State.Success) {
-                        IconButton(onClick = { onNavigate("search/${SearchReason.FindNote}") }) {
+                    AnimatedVisibility(visible = uiState.state is State.Success && uiState.tagNotes != null && uiState.tagNotes.notes.size > 20) {
+                        IconButton(onClick = { onNavigate("search/?tagId=${tagId}/${SearchReason.FindNote}") }) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_search),
                                 contentDescription = "search"
@@ -112,7 +112,6 @@ fun TagNotesScreen(
 
             AnimatedContent(targetState = uiState.state, label = "note_content") { state ->
                 when (state) {
-                    is State.Idle -> Unit
                     is State.Loading -> {
                         Loader(modifier = Modifier)
                     }
@@ -122,6 +121,7 @@ fun TagNotesScreen(
                             State.Error.Reason.EmptyData -> {
                                 EmptyListState(message = stringResource(R.string.empty_notes_action_info))
                             }
+
                             else -> {
                                 ErrorState(
                                     message = state.message.value(context)
@@ -129,26 +129,27 @@ fun TagNotesScreen(
                             }
                         }
                     }
+                    else -> Unit
 
-                    is State.Success -> {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
+                }
+            }
+            AnimatedVisibility(visible = uiState.state is State.Success) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(
+                        key = { it.id },
+                        items = uiState.tagNotes!!.notes
+                    ) { note ->
+                        Note(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            items(
-                                key = { it.id },
-                                items = uiState.tagNotes!!.notes
-                            ) { note ->
-                                Note(
-                                    modifier = Modifier.fillMaxSize(),
-                                    note = note,
-                                    onClick = { onNavigate("note/?noteId=${note.id}") }
-                                )
-                            }
-                        }
+                            note = note,
+                            onClick = { onNavigate("note/?noteId=${note.id}") }
+                        )
                     }
                 }
             }

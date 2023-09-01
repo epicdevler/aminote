@@ -16,10 +16,11 @@
     <string name="create">Create</string>
     <string name="cancel">Cancel</string>
     <string name="create_tag_input_placeholder">Tag Name</string>
-    <string name="create_tag_helper_info">Tags helps you identity notes tied to a particular subject matter. Enter a descriptive name (max of 2 words) for your future notes, e.g Work, School, Ideas, ...</string>
+    <string name="create_tag_helper_info">Tags helps you identity notes tied to a particular subject matter. Enter a descriptive name (max of 2 words) for your future notes, e.g Work, School, Ideas, …</string>
     <string name="create_tag">Create Tag</string>
     <string name="tag_create">Create Tags</string>
     <string name="create_tag_error_empty_field">No title provided.</string>
     <string name="create_tag_error_invalid_length">Tag title should only contain 2 words</string>
     <string name="empty_notes_action_info">Start taking digital versions of your note, meetings, ideas and more.</string>
+    <string name="search_error_not_found">Sorry, no notes found for that.</string>
 </resources>
